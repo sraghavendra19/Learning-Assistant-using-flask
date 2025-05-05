@@ -1,0 +1,5 @@
+streamlit
+openai
+python-dotenv
+fpdf          # (optional - for PDF export later)
+pyttsx3       # (optional - for text-to-speech later)
