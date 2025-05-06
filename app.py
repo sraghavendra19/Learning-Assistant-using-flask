@@ -24,15 +24,12 @@ def generate_content(topic):
         "Format:\nQ: Question text\nA. Option 1\nB. Option 2\nC. Option 3\nAnswer: A/B/C"
     )
 
-    # Ask for explanation, convert markdown to HTML
-    explanation_raw = ask_model(explanation_prompt)
-    explanation_html = markdown.markdown(explanation_raw, extensions=["extra"])
+    explanation_markdown = ask_model(explanation_prompt)
+    explanation_html = markdown.markdown(explanation_markdown, extensions=["extra"])
 
-    # Get summary and quiz
     summary = ask_model(summary_prompt)
     quiz_raw = ask_model(quiz_prompt)
 
-    # Resource links
     resources = [
         f"https://en.wikipedia.org/wiki/{topic.replace(' ', '_')}",
         f"https://www.khanacademy.org/search?page_search_query={topic.replace(' ', '%20')}",
@@ -41,7 +38,8 @@ def generate_content(topic):
     ]
 
     quiz = parse_quiz_output(quiz_raw)
-    return explanation_html, summary, resources, quiz
+
+    return explanation_markdown, explanation_html, summary, resources, quiz
 
 def parse_quiz_output(text):
     quiz = []
@@ -72,20 +70,28 @@ def index():
         if not topic:
             return render_template("index.html", error="Please enter a topic.")
 
-        explanation, summary, resources, quiz = generate_content(topic)
+        explanation_md, explanation_html, summary, resources, quiz = generate_content(topic)
 
         with open("output.txt", "w", encoding="utf-8") as f:
-            f.write("Explanation:\n" + markdown.markdown(explanation, extensions=["extra"]) + "\n\n")
-            f.write("Summary:\n" + summary + "\n\n")
-            f.write("Resources:\n" + "\n".join(resources) + "\n\n")
-            f.write("Quiz:\n")
+            f.write(f"📘 Explanation on {topic}\n\n")
+            f.write(explanation_md + "\n\n")
+
+            f.write("📝 Summary\n")
+            f.write(summary + "\n\n")
+
+            f.write("🔗 Resources\n")
+            for link in resources:
+                f.write(link + "\n")
+            f.write("\n")
+
+            f.write("🧠 Quiz Questions\n")
             for q in quiz:
                 f.write(f"Q: {q['question']}\n")
                 for opt in q['options']:
                     f.write(f"{opt}\n")
                 f.write(f"Answer: {q['answer']}\n\n")
 
-        return render_template("index.html", topic=topic, explanation=explanation, summary=summary, resources=resources, quiz=quiz)
+        return render_template("index.html", topic=topic, explanation=explanation_html, summary=summary, resources=resources, quiz=quiz)
 
     return render_template("index.html")
 
